@@ -30,9 +30,11 @@ For **services** alarms:
 
 You should notice two important things:
 
-1. _send_telegram_msg_ plugin. It's not a real plugin, it's just a script that _pipes_ messages into the UNIX socket of _Telegram-CLI_ running instance, resolving them with the correct _Telegram-CLI_ syntax.
-2. _$CONTACTADDRESS1$_ parameter. Yup, we use _$CONTACTADDRESS1$_ to identify every contact user. So, every user configured on _Nagios_ has the _$CONTACTADDRESS1$_ valorized with the _Telegram-CLI_ peer name (when contacts get added into _Telegram-CLI_ a peer name is automatically generated. You can also rename it.).
+1. **send_telegram_msg** plugin. It's not a real plugin, it's just a script that _pipes_ messages into the UNIX socket of _Telegram-CLI_ running instance, resolving them with the correct _Telegram-CLI_ syntax.
+2. **$CONTACTADDRESS1$** parameter. Yup, we use _$CONTACTADDRESS1$_ to identify every contact user. So, every user configured on _Nagios_ has the _$CONTACTADDRESS1$_ valorized with the _Telegram-CLI_ peer name (when contacts get added into _Telegram-CLI_ a peer name is automatically generated. You can also rename it.).
 
 ## Sending acknowledgements via _Telegram_
 
 Don't worry. I will write this section too. Sooner or later.
+
+### Yeah, I know. Lot of things still missing. Give me few days and you'll have this repo ready
