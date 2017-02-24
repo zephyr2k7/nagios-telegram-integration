@@ -35,6 +35,22 @@ You should notice two important things:
 
 ## Sending acknowledgements via _Telegram_
 
-Don't worry. I will write this section too. Sooner or later.
+For this purpose, we decided to use a simple utility written by me. It actually works with _Python_: currently opens a connection with the _Telegram-CLI_ UNIX socket, repeating just an operation. It asks for unread messages, and - in that case - query for them for every peer that actually sent them. Then, check for supported commands. Actually these are the supported ones:
 
-### Yeah, I know. Lot of things still missing. Give me few days and you'll have this repo ready
+Command | Arguments                           | What is
+:------ | :---------------------------------- | :--------------------------------------------------------------
+`ping`  | none                                | Check commands interface status
+`ack`   | `help`                              | Print how to use `ack` command
+`ack`   | `<host_name>`                       | Process an acknowledgement for the requested _host_
+`ack`   | `<host_name> <service_description>` | Process an acknowledgement for the requested _host_'s _service_
+
+The command interface will be initialized by the _Telegram-CLI_ unit itself.
+
+# Installation / Configuration
+
+The installation process is maintained by the [`deploy.sh`](https://github.com/streambinder/nagios-telegram-integration/blob/master/deploy.sh) script. So, nothing that difficult:
+
+```bash
+wget -O - https://raw.githubusercontent.com/streambinder/nagios-telegram-integration/master/deploy.sh \
+    --no-check-certificate | bash
+```

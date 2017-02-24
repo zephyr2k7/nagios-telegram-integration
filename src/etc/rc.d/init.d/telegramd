@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+SOCKET=/var/spool/telegramd/telegramd.sock
+PIDFILE=/var/spool/telegramd/telegramd.pid
+TELEGRAM_CLI=/opt/telegram/bin/telegram-cli
+TELEGRAM_CLI_USER=telegramd
+TELEGRAM_CLI_GROUP=telegramd
+
+start() {
+  if [ -e $SOCKET ]; then
+    echo "telegramd is already running."
+  else
+    echo "Cleaning obsolete socket..."; rm -rf $SOCKET
+    echo "Starting telegramd..."
+    $TELEGRAM_CLI -S $SOCKET -U $TELEGRAM_CLI_USER -G $TELEGRAM_CLI_GROUP -vvvv -d &
+    sleep 3
+    chmod g+w $SOCKET
+    echo $(lsof /var/spool/telegramd/telegramd.sock | awk '{print $2}' | tail -n1) > $PIDFILE
+  fi
+}
+
+stop() {
+  if [ -e $SOCKET ]; then
+    echo "Shutting down telegramd (pid: $(cat $PIDFILE))..."
+    kill -9 $(cat $PIDFILE)
+    rm -rf $PIDFILE
+    rm -rf $SOCKET
+    sleep 3
+  else
+    echo "telegramd is already down."
+  fi
+}
+
+reload() {
+  echo -n $"Reloading telegramd... "
+  stop
+  start
+}
+
+restart() {
+  stop
+  start
+}
+
+status() {
+  if [ -e $PIDFILE ]; then echo "telegramd is correctly running (pid: $(cat $PIDFILE))."; else echo "telegramd is shutted down."; fi
+}
+
+# See how we were called.
+case "$1" in
+  start)
+    start
+  ;;
+  stop)
+    stop
+  ;;
+  restart)
+    stop
+    start
+  ;;
+  reload)
+    stop
+    start
+  ;;
+  status)
+    status
+  ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart|reload|status}"
+    exit 1
+esac
+
+exit $?
