@@ -54,3 +54,10 @@ The installation process is maintained by the [`deploy.sh`](https://github.com/s
 wget -O - https://raw.githubusercontent.com/streambinder/nagios-telegram-integration/master/deploy.sh \
     --no-check-certificate | bash
 ```
+
+## Assumptions
+
+This module has been thought to fit into a _CentOS 5.11 (Final)_ and hasn't been tested on any other environment. It should not be that hard to make it working on different Linux distributions, though, but notice that:
+
+1. if _vysheng_'s work supports your distribution, this module will, too.
+2. my `deploy.sh` script is thought to work just on the already mentioned environment. It's open source, though, so just read what it does and feel free to adapt it.
