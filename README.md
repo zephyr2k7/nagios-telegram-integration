@@ -48,6 +48,8 @@ The command interface will be initialized by the _Telegram-CLI_ unit itself.
 
 # Installation / Configuration
 
+As part of this work is based on _vysheng_'s work, you will firstly need to follow _vysheng_ instructions to get _Telegram-CLI_ working. Once you have done it, continue below.
+
 The installation process is maintained by the [`deploy.sh`](https://github.com/streambinder/nagios-telegram-integration/blob/master/deploy.sh) script. So, nothing that difficult:
 
 ```bash
