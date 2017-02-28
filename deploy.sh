@@ -39,7 +39,7 @@ read -p "Nagios command file path [/var/spool/nagios/cmd/nagios.cmd]: " NAGIOS_C
 if [ "$(echo ${NAGIOS_COMMAND_FILE})" == "" ]; then
   NAGIOS_COMMAND_FILE=/var/spool/nagios/cmd/nagios.cmd
 fi
-TELEGRAM_ETC="/etc/telegramd"
+TELEGRAM_ETC="/etc/telegram-cli"
 TELEGRAM_SPOOL="/var/spool/telegramd"
 
 mkdir -p ${TELEGRAM_ETC}

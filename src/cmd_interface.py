@@ -6,7 +6,7 @@ import time
 
 
 NAGIOS_COMMAND_FILE = "/var/spool/nagios/cmd/nagios.cmd"
-TELEGRAM_UNIX_SOCKET = "/var/spool/telegram-cli/telegram-cli.sock"
+TELEGRAM_UNIX_SOCKET = "/var/spool/telegramd/telegramd.sock"
 INTERVAL_DIALOGS_DISCOVER = 3  # second(s)
 INTERVAL_OVERALL_CYCLE = 2  # second(s)
 
