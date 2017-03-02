@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "contact_list" | socat - UNIX-CONNECT:/var/spool/telegramd/telegramd.sock
+echo "dialog_list" | socat - UNIX-CONNECT:/var/spool/telegramd/telegramd.sock
+sleep 3
+echo "msg $1 $2" | socat - UNIX-CONNECT:/var/spool/telegramd/telegramd.sock

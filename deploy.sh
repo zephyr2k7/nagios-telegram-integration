@@ -42,12 +42,20 @@ fi
 TELEGRAM_ETC="/etc/telegram-cli"
 TELEGRAM_SPOOL="/var/spool/telegramd"
 
+groupadd telegramd
+useradd -m -d ${TELEGRAM_ROOT} telegramd
+usermod -a -G telegramd telegramd
+mkdir -p /usr/local/bin
 mkdir -p ${TELEGRAM_ETC}
 mkdir -p ${TELEGRAM_SPOOL}
 cp -f "${TELEGRAM_ROOT}/tg-server.pub" "${TELEGRAM_ETC}/"
 sed -i "/^TELEGRAM_CLI=/c TELEGRAM_CLI=${TELEGRAM_BINARY}" ./src/telegramd
 sed -i "/^NAGIOS_COMMAND_FILE\ =\ /c NAGIOS_COMMAND_FILE\ =\ ${NAGIOS_COMMAND_FILE}" ./src/cmd_interface.py
 cp -f ./src/cmd_interface.py ${TELEGRAM_ROOT}/cmd_interface.py
+chown telegramd:telegramd ${TELEGRAM_ROOT}/cmd_interface.py
+chmod ug+x ${TELEGRAM_ROOT}/cmd_interface.py
+cp -f {.,/usr/local/bin/}/src/send_telegram_msg
+chmod a+x /usr/local/bin/send_telegram_msg
 
 # README: this part is extremely linked to the running distribution
 cp -f ./src/telegramd /etc/rc.d/init.d/

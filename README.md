@@ -19,13 +19,13 @@ First step has been configuring everything to make _Nagios_ use also _Telegram_ 
 For **hosts** alarms:
 
 ```
-/usr/lib/nagios/plugins/send_telegram_msg "$CONTACTADDRESS1$" "$NOTIFICATIONTYPE$ for $HOSTALIAS$: $HOSTSTATE$ (info: http://nagios.corp.net/cgi-bin//status.cgi?host=$HOSTNAME$)"
+/usr/local/bin/send_telegram_msg "$CONTACTADDRESS1$" "$NOTIFICATIONTYPE$ for $HOSTALIAS$: $HOSTSTATE$ (info: http://nagios.corp.net/cgi-bin/status.cgi?host=$HOSTNAME$)"
 ```
 
 For **services** alarms:
 
 ```
-/usr/lib/nagios/plugins/send_telegram_msg "$CONTACTADDRESS1$" "$NOTIFICATIONTYPE$ for $HOSTALIAS$: $SERVICEDESC$ is $SERVICESTATE$ (info: http://nagios.corp.net/cgi-bin//status.cgi?host=$HOSTNAME$)"
+/usr/local/bin/send_telegram_msg "$CONTACTADDRESS1$" "$NOTIFICATIONTYPE$ for $HOSTALIAS$: $SERVICEDESC$ is $SERVICESTATE$ (info: http://nagios.corp.net/cgi-bin/status.cgi?host=$HOSTNAME$)"
 ```
 
 You should notice two important things:
