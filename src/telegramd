@@ -11,6 +11,7 @@ TELEGRAM_CLI_GROUP=telegramd
 
 COMMAND_INTERFACE=/opt/telegram/cmd_interface.py
 COMMAND_INTERFACE_PID=/var/spool/telegramd/cmd_interface.pid
+COMMAND_INTERFACE_LOG=/var/log/telegramd.log
 
 start() {
   if [ -e $TELEGRAM_CLI_SOCKET ]; then
@@ -29,7 +30,7 @@ start() {
     echo "command_interface is already running."
   else
     echo "Starting command_interface..."
-    $COMMAND_INTERFACE &
+    $COMMAND_INTERFACE > $COMMAND_INTERFACE_LOG 2>&1 &
     echo $(ps ax | grep $COMMAND_INTERFACE | head -1 | awk '{ print $1 }') > $COMMAND_INTERFACE_PID
   fi
 }
