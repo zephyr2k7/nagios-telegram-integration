@@ -16,7 +16,7 @@ if [ -d ${TELEGRAM_DEFAULT_PATH} ]; then
   done
 fi
 
-if [ ! -z ${TELEGRAM_ROOT} ]; then
+if [ -z ${TELEGRAM_ROOT} ]; then
   echo "Telegram-CLI root folder not found."
   read -p "Please, write its path: " TELEGRAM_ROOT
   if [ ! -d ${TELEGRAM_ROOT} ]; then
