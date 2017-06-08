@@ -10,97 +10,102 @@ TELEGRAM_CLI_USER=telegramd
 TELEGRAM_CLI_GROUP=telegramd
 
 COMMAND_INTERFACE=/opt/telegram/cmd_interface.py
-COMMAND_INTERFACE_PID=/var/spool/telegramd/cmd_interface.pid
+COMMAND_INTERFACE_PIDFILE=/var/spool/telegramd/cmd_interface.pid
 COMMAND_INTERFACE_LOG=/var/log/telegramd.log
 
 start() {
-  if [ -e $TELEGRAM_CLI_SOCKET ]; then
-    echo "telegramd is already running."
-  else
-    echo "Cleaning obsolete socket..."
-    rm -rf $TELEGRAM_CLI_SOCKET
-    echo "Starting telegramd..."
-    $TELEGRAM_CLI -S $TELEGRAM_CLI_SOCKET -U $TELEGRAM_CLI_USER -G $TELEGRAM_CLI_GROUP -vvvv -d &
-    sleep 1
-    chmod g+w $TELEGRAM_CLI_SOCKET
-    echo $(lsof $TELEGRAM_CLI_SOCKET | awk '{ print $2 }' | tail -n1) > $TELEGRAM_CLI_PIDFILE
-  fi
+ if [ -e "${TELEGRAM_CLI_SOCKET}" ]; then
+  echo "telegramd is already running."
+ else
+  echo "Cleaning obsolete socket..."
+  rm -rf "${TELEGRAM_CLI_SOCKET}"
+  echo "Starting telegramd..."
+  ${TELEGRAM_CLI} -S "${TELEGRAM_CLI_SOCKET}" -U "${TELEGRAM_CLI_USER}" -G "${TELEGRAM_CLI_GROUP}" -vvvv -d &
+  sleep 1
+  chmod g+w "${TELEGRAM_CLI_SOCKET}"
+  echo $(lsof "${TELEGRAM_CLI_SOCKET}" | awk '{ print $2 }' | tail -n1) > "${TELEGRAM_CLI_PIDFILE}"
+ fi
 
-  if [ -e $COMMAND_INTERFACE_PID ]; then
-    echo "command_interface is already running."
-  else
-    echo "Starting command_interface..."
-    $COMMAND_INTERFACE > $COMMAND_INTERFACE_LOG 2>&1 &
-    echo $(ps ax | grep $COMMAND_INTERFACE | head -1 | awk '{ print $1 }') > $COMMAND_INTERFACE_PID
-  fi
+ if [ -e "${COMMAND_INTERFACE_PIDFILE}" ]; then
+  echo "command_interface is already running."
+ else
+  echo "Starting command_interface..."
+  ${COMMAND_INTERFACE} > "${COMMAND_INTERFACE_LOG}" 2>&1 &
+  echo $(ps ax | grep "${COMMAND_INTERFACE}" | grep -v grep | head -1 | awk '{ print $1 }') > "${COMMAND_INTERFACE_PIDFILE}"
+ fi
 }
 
 stop() {
-  if [ -e $TELEGRAM_CLI_SOCKET ]; then
-    echo "Shutting down telegramd (pid: $(cat $TELEGRAM_CLI_PIDFILE))..."
-    kill -9 $(cat $TELEGRAM_CLI_PIDFILE)
-    rm -rf $TELEGRAM_CLI_PIDFILE
-    rm -rf $TELEGRAM_CLI_SOCKET
-  else
-    echo "telegramd is already down."
+ if [ -e "${COMMAND_INTERFACE_PIDFILE}" ]; then
+  echo "Shutting down command_interface (pid: $(cat ${COMMAND_INTERFACE_PIDFILE}))..."
+  if [ "$(ps ax | grep ^$(cat ${COMMAND_INTERFACE_PIDFILE}) | grep -v grep | wc -l)" -gt 0 ]; then
+   kill -9 $(cat "${COMMAND_INTERFACE_PIDFILE}")
   fi
+ else
+  echo "command_interface is already down."
+ fi
+ rm -f "${COMMAND_INTERFACE_PIDFILE}"
 
-  if [ -e $COMMAND_INTERFACE_PID ]; then
-    echo "Shutting down command_interface (pid: $(cat $COMMAND_INTERFACE_PID))..."
-    kill -9 $(cat $COMMAND_INTERFACE_PID)
-    rm -rf $COMMAND_INTERFACE_PID
-    sleep 1
-  else
-    echo "command_interface is already down."
+ if [[ -e "${TELEGRAM_CLI_SOCKET}" ]] && [[ -e "${TELEGRAM_CLI_PIDFILE}" ]]; then
+  echo "Shutting down telegramd (pid: $(cat ${TELEGRAM_CLI_PIDFILE}))..."
+  if [ "$(ps ax | grep ^$(cat ${TELEGRAM_CLI_PIDFILE}) | grep -v grep | wc -l)" -gt 0 ]; then
+   kill -9 $(cat "${TELEGRAM_CLI_PIDFILE}")
   fi
+ else
+  echo "telegramd is already down."
+ fi
+ rm -f "${TELEGRAM_CLI_PIDFILE}"
+ rm -f "${TELEGRAM_CLI_SOCKET}"
+
+ sleep 1
 }
 
 reload() {
-  echo -n $"Reloading... "
-  stop
-  start
+ echo -n "Reloading... "
+ stop
+ start
 }
 
 restart() {
-  stop
-  start
+ stop
+ start
 }
 
 status() {
-  if [ -e $TELEGRAM_CLI_PIDFILE ]; then
-    echo "telegramd is correctly running (pid: $(cat $TELEGRAM_CLI_PIDFILE))."
-  else
-    echo "telegramd is shutted down."
-  fi
+ if [ -e "${TELEGRAM_CLI_PIDFILE}" ]; then
+  echo "telegramd is correctly running (pid: $(cat ${TELEGRAM_CLI_PIDFILE}))."
+ else
+  echo "telegramd is shutted down."
+ fi
 
-  if [ -e $COMMAND_INTERFACE_PID ]; then
-    echo "command_interface is correctly running (pid: $(cat $COMMAND_INTERFACE_PID))."
-  else
-    echo "command_interface is shutted down."
-  fi
+ if [ -e "${COMMAND_INTERFACE_PIDFILE}" ]; then
+  echo "command_interface is correctly running (pid: $(cat ${COMMAND_INTERFACE_PIDFILE}))."
+ else
+  echo "command_interface is shutted down."
+ fi
 }
 
 case "$1" in
-  start)
-    start
-  ;;
-  stop)
-    stop
-  ;;
-  restart)
-    stop
-    start
-  ;;
-  reload)
-    stop
-    start
-  ;;
-  status)
-    status
-  ;;
-  *)
-    echo $"Usage: $0 {start|stop|restart|reload|status}"
-    exit 1
+ start)
+  start
+ ;;
+ stop)
+  stop
+ ;;
+ restart)
+  stop
+  start
+ ;;
+ reload)
+  stop
+  start
+ ;;
+ status)
+  status
+ ;;
+ *)
+  echo $"Usage: $0 {start|stop|restart|reload|status}"
+  exit 1
 esac
 
 exit $?
