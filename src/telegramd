@@ -30,7 +30,7 @@ start() {
   echo "command_interface is already running."
  else
   echo "Starting command_interface..."
-  ${COMMAND_INTERFACE} > "${COMMAND_INTERFACE_LOG}" 2>&1 &
+  ${COMMAND_INTERFACE} &>"${COMMAND_INTERFACE_LOG}" &
   echo $(ps ax | grep "${COMMAND_INTERFACE}" | grep -v grep | head -1 | awk '{ print $1 }') > "${COMMAND_INTERFACE_PIDFILE}"
  fi
 }
