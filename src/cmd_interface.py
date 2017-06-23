@@ -87,6 +87,10 @@ def parseable(message):
     return True
 
 
+def command_man():
+    return "This interface is known to work with the following commands: `man`, `ping`, `ack`, `status`. For any of those but `man` and `ping`, you can use `help` option for assistance."
+
+
 def command_ping():
     return "All right. I'm still here."
 
@@ -189,7 +193,9 @@ while True:
             message_id += 1
             if parseable(message):
                 message = message.split(">>>")[1].strip()
-                if len(message) >= len("ping") and message.lower()[:len("ping")] == "ping":
+                if len(message) >= len("man") and message.lower()[:len("man")] == "man":
+                    telegram_message(command_man(), peer)
+                elif len(message) >= len("ping") and message.lower()[:len("ping")] == "ping":
                     telegram_message(command_ping(), peer)
                 elif len(message) >= len("ack") and message.lower()[:len("ack")] == "ack":
                     telegram_message(command_ack(message), peer)
