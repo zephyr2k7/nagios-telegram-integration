@@ -37,12 +37,17 @@ You should notice two important things:
 
 For this purpose, we decided to use a simple utility written by me. It actually works with _Python_: currently opens a connection with the _Telegram-CLI_ UNIX socket, repeating just an operation. It asks for unread messages, and - in that case - query for them for every peer that actually sent them. Then, check for supported commands. Actually these are the supported ones:
 
-Command | Arguments                           | What is
-:------ | :---------------------------------- | :--------------------------------------------------------------
-`ping`  | none                                | Check commands interface status
-`ack`   | `help`                              | Print how to use `ack` command
-`ack`   | `<host_name>`                       | Process an acknowledgement for the requested _host_
-`ack`   | `<host_name> <service_description>` | Process an acknowledgement for the requested _host_'s _service_
+Command  | Arguments                           | What is
+:------- | :---------------------------------- | :--------------------------------------------------------------
+`man`    | none                                | List commands and any other additional note
+`ping`   | none                                | Check commands interface status
+`ack`    | `help`                              | Print how to use `ack` command
+`ack`    | `<host_name>`                       | Process an acknowledgement for the requested _host_
+`ack`    | `<host_name> <service_description>` | Process an acknowledgement for the requested _host_'s _service_
+`status` | `help`                              | Print how to use `status` command
+`status` | none                                | Sum up all hosts statuses
+`status` | `<host_name>`                       | Show status of the requested _host_
+`status` | `<host_name> <service_description>` | Show status of the requested _host_'s _service_
 
 The command interface will be initialized by the _Telegram-CLI_ unit itself.
 
