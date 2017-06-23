@@ -69,6 +69,19 @@ def nagios_status_build():
     statuses_up = os.path.getmtime(NAGIOS_STATUS_FILE)
 
 
+def nagios_find_name(host, service=None):
+    global statuses
+    if service is None:
+        for registered_host in statuses:
+            if host.lower() == registered_host.lower()[:len(host)]:
+                return registered_host
+    else:
+        for registered_srvc in statuses[host]["services"]:
+            if service.lower() == registered_srvc.lower()[:len(service)]:
+                return registered_srvc
+    return None
+
+
 def nagios_status(host, service=None):
     global statuses
     if service is None:
@@ -102,14 +115,20 @@ def command_ack(message):
         return "ack host_name [service_description]"
     else:
         params = message.split()
-        hostname = params[0].replace("\"", "").replace("'", "")
-        if len(params) > 1:
-            service = " ".join(params[1:]).replace("\"", "").replace("'", "").strip()
-            command = "[" + str(int(time.time())) + "] ACKNOWLEDGE_SVC_PROBLEM;" + hostname + ";" + service + ";1;1;1;nagiosadmin;Ack."
-            return_message = "Service \"" + service + "\" on \"" + hostname + "\" acknowledgment correctly fired."
+        hostname = nagios_find_name(params[0].replace("\"", "").replace("'", ""))
+        if hostname is not None:
+            if len(params) > 1:
+                service = nagios_find_name(hostname, " ".join(params[1:]).replace("\"", "").replace("'", "").strip())
+                if service is not None:
+                    command = "[" + str(int(time.time())) + "] ACKNOWLEDGE_SVC_PROBLEM;" + hostname + ";" + service + ";1;1;1;nagiosadmin;Ack."
+                    return_message = "Service \"" + service + "\" on \"" + hostname + "\" acknowledgment correctly fired."
+                else:
+                    return_message = "Service not found."
+            else:
+                command = "[" + str(int(time.time())) + "] ACKNOWLEDGE_HOST_PROBLEM;" + hostname + ";1;1;1;nagiosadmin;Ack."
+                return_message = "Host \"" + hostname + "\" status acknowledgment correctly fired."
         else:
-            command = "[" + str(int(time.time())) + "] ACKNOWLEDGE_HOST_PROBLEM;" + hostname + ";1;1;1;nagiosadmin;Ack."
-            return_message = "Host \"" + hostname + "\" status acknowledgment correctly fired."
+            return_message = "Host not found."
         nagios_command_file = open(NAGIOS_COMMAND_FILE, 'w')
         nagios_command_file.write(command + "\n")
         nagios_command_file.close()
@@ -126,9 +145,9 @@ def command_status(message):
         ret_statuses = str()
         ok_statuses = 0
         for host in statuses:
-            host_status = command_status("status " + host)
+            host_status = nagios_status(host)
             if host_status.lower() != "ok":
-                ret_statuses += host + " is " + command_status("status " + host) + "; "
+                ret_statuses += host + " is " + str(host_status) + "; "
             else:
                 ok_statuses += 1
         if len(ret_statuses) > 0:
@@ -137,20 +156,26 @@ def command_status(message):
         return ret_statuses
     else:
         params = message.split()
-        hostname = params[0].replace("\"", "").replace("'", "")
-        if len(params) > 1:
-            service = " ".join(params[1:]).replace("\"", "").replace("'", "").strip()
-            status = nagios_status(hostname, service)
-            if status is not None:
-                return "Service \"" + service + "\" status  for \"" + hostname + "\" is: " + str(nagios_status(hostname, service))
+        hostname = nagios_find_name(params[0].replace("\"", "").replace("'", ""))
+        if hostname is not None:
+            if len(params) > 1:
+                service = nagios_find_name(hostname, " ".join(params[1:]).replace("\"", "").replace("'", "").strip())
+                if service is not None:
+                    status = nagios_status(hostname, service)
+                    if status is not None:
+                        return "Service \"" + service + "\" status  for \"" + hostname + "\" is: " + str(nagios_status(hostname, service))
+                    else:
+                        return "Service \"" + service + "\" for \"" + hostname + "\" not found."
+                else:
+                    return "Service not found."
             else:
-                return "Service \"" + service + "\" for \"" + hostname + "\" not found."
+                status = nagios_status(hostname)
+                if status is not None:
+                    return "Host \"" + hostname + "\" status is: " + str(nagios_status(hostname))
+                else:
+                    return "Host \"" + hostname + "\" not found."
         else:
-            status = nagios_status(hostname)
-            if status is not None:
-                return "Host \"" + hostname + "\" status is: " + str(nagios_status(hostname))
-            else:
-                return "Host \"" + hostname + "\" not found."
+            return "Host not found."
 
 while True:
     if os.path.getmtime(NAGIOS_STATUS_FILE) > statuses_up:
