@@ -1,18 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
 import select
 import socket
 import time
 
 
 NAGIOS_COMMAND_FILE = "/var/spool/nagios/cmd/nagios.cmd"
+NAGIOS_STATUS_FILE = "/var/log/nagios/status.dat"
 TELEGRAM_UNIX_SOCKET = "/var/spool/telegramd/telegramd.sock"
 INTERVAL_DIALOGS_DISCOVER = 3  # second(s)
 INTERVAL_OVERALL_CYCLE = 2  # second(s)
 
 
 sock = None
+statuses = dict()
+statuses_up = 0.0
 
 
 def telegram_command(command):
@@ -23,6 +27,55 @@ def telegram_command(command):
 
 def telegram_message(message, peer):
     return telegram_command("msg " + peer + " " + message)
+
+
+def nagios_status_build():
+    global statuses
+    global statuses_up
+    try:
+        status_content = str()
+        with open(NAGIOS_STATUS_FILE, 'r') as status_filename:
+            status_content = status_filename.read()
+    except Exception as e:
+        print "ERROR: " + str(e)
+        return
+    statuses = dict()
+    status_host = False
+    status_host_name = str()
+    status_srvc = False
+    status_srvc_name = str()
+    for line in status_content.split("\n"):
+        if (status_host or status_srvc) and line.lower().strip() == "}":
+            status_host = False
+            status_srvc = False
+        if status_host and "host_name" in line.lower():
+            status_host_name = line.split("host_name=")[1].strip()
+            statuses[status_host_name] = dict()
+            statuses[status_host_name]["status"] = "UNKNOWN"
+            statuses[status_host_name]["services"] = dict()
+        elif status_host and line.lower().strip()[0:len("plugin_output")] == "plugin_output":
+            statuses[status_host_name]["status"] = line.split("plugin_output=")[1].strip().split()[0]
+        elif status_srvc and "host_name" in line.lower():
+            status_host_name = line.split("host_name=")[1].strip()
+        elif status_srvc and "service_description" in line.lower():
+            status_srvc_name = line.split("service_description=")[1].strip()
+            statuses[status_host_name]["services"][status_srvc_name] = "UNKNOWN"
+        elif status_srvc and line.lower().strip()[0:len("plugin_output")] == "plugin_output":
+            statuses[status_host_name]["services"][status_srvc_name] = line.split("plugin_output=")[1].strip()
+        if "hoststatus" in line.lower():
+            status_host = True
+        elif "servicestatus" in line.lower():
+            status_srvc = True
+    statuses_up = os.path.getmtime(NAGIOS_STATUS_FILE)
+
+
+def nagios_status(host, service=None):
+    global statuses
+    if service is None:
+        return statuses[host]["status"]
+    else:
+        return statuses[host]["services"][service]
+    return None
 
 
 def parseable(message):
@@ -39,8 +92,8 @@ def command_ping():
 
 
 def command_ack(message):
-    if message.lower()[:3] == "ack":
-        message = message[3:].strip()
+    if message.lower()[:len("ack")] == "ack":
+        message = message[len("ack"):].strip()
     if len(message) == 0 or message.lower() == "help":
         return "ack host_name [service_description]"
     else:
@@ -58,15 +111,53 @@ def command_ack(message):
         nagios_command_file.close()
         return return_message
 
+
+def command_status(message):
+    global statuses
+    if message.lower()[:len("status")] == "status":
+        message = message[len("status"):].strip()
+    if message.lower() == "help":
+        return "status [host_name [service_description]]"
+    elif len(message) == 0:
+        ret_statuses = str()
+        ok_statuses = 0
+        for host in statuses:
+            host_status = command_status("status " + host)
+            if host_status.lower() != "ok":
+                ret_statuses += host + " is " + command_status("status " + host) + "; "
+            else:
+                ok_statuses += 1
+        if len(ret_statuses) > 0:
+            ret_statuses = ret_statuses[:-2] + ". "
+        ret_statuses += str(ok_statuses) + " hosts are ok."
+        return ret_statuses
+    else:
+        params = message.split()
+        hostname = params[0].replace("\"", "").replace("'", "")
+        if len(params) > 1:
+            service = " ".join(params[1:]).replace("\"", "").replace("'", "").strip()
+            status = nagios_status(hostname, service)
+            if status is not None:
+                return "Service \"" + service + "\" status  for \"" + hostname + "\" is: " + str(nagios_status(hostname, service))
+            else:
+                return "Service \"" + service + "\" for \"" + hostname + "\" not found."
+        else:
+            status = nagios_status(hostname)
+            if status is not None:
+                return "Host \"" + hostname + "\" status is: " + str(nagios_status(hostname))
+            else:
+                return "Host \"" + hostname + "\" not found."
+
 while True:
+    if os.path.getmtime(NAGIOS_STATUS_FILE) > statuses_up:
+        nagios_status_build()
     time.sleep(INTERVAL_OVERALL_CYCLE)
     if sock is None:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(TELEGRAM_UNIX_SOCKET)
     try:
-        ready_r, ready_w, ready_err = \
-            select.select([sock, ], [sock, ], [], 5)
-    except select.error:
+        ready_r, ready_w, ready_err = select.select([sock, ], [sock, ], [], 5)
+    except select.error as e:
         try:
             sock.shutdown(2)
             sock.close()
@@ -98,9 +189,11 @@ while True:
             message_id += 1
             if parseable(message):
                 message = message.split(">>>")[1].strip()
-                if len(message) >= 4 and message.lower()[:4] == "ping":
+                if len(message) >= len("ping") and message.lower()[:len("ping")] == "ping":
                     telegram_message(command_ping(), peer)
-                elif len(message) >= 3 and message.lower()[:3] == "ack":
+                elif len(message) >= len("ack") and message.lower()[:len("ack")] == "ack":
                     telegram_message(command_ack(message), peer)
+                elif len(message) >= len("status") and message.lower()[:len("status")] == "status":
+                    telegram_message(command_status(message), peer)
                 else:
                     telegram_message("Command not found.", peer)
