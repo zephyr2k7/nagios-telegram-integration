@@ -174,9 +174,9 @@ def command_status(message):
             else:
                 status_host = nagios_status(hostname)
                 if status_host is not None:
-                    status = "Host \"" + hostname + "\" status is: " + str(status_host)
+                    status = "Host \"" + hostname + "\" overall status is: " + str(status_host)
                     for service in statuses[hostname]["services"]:
-                        status += "\nStatus \"" + service + "\": " + statuses[hostname]["services"][service]
+                        status += "\n - Service \"" + service + "\": " + statuses[hostname]["services"][service]
                     return status
                 else:
                     return "Host \"" + hostname + "\" not found."
