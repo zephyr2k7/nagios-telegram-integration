@@ -48,6 +48,9 @@ Command  | Arguments                           | What is
 `status` | none                                | Sum up all hosts statuses
 `status` | `<host_name>`                       | Show status of the requested _host_
 `status` | `<host_name> <service_description>` | Show status of the requested _host_'s _service_
+`list`   | `help`                              | Print how to use `list` command
+`list`   | none                                | Sum up hosts list
+`list`   | `<host_name>`                       | List requested _host_'s services
 
 The command interface will be initialized by the _Telegram-CLI_ unit itself.
 

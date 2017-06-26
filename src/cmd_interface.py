@@ -102,7 +102,7 @@ def parseable(message):
 
 
 def command_man():
-    return "This interface is known to work with the following commands: `man`, `ping`, `ack`, `status`. For any of those but `man` and `ping`, you can use `help` option for assistance."
+    return "This interface is known to work with the following commands:\n - man\n - ping\n - ack\n - status\n - list\nFor any of those but \"man\" and \"ping\", you can use \"help\" option for assistance."
 
 
 def command_ping():
@@ -144,16 +144,18 @@ def command_status(message):
         return "status [host_name [service_description]]"
     elif len(message) == 0:
         ret_statuses = str()
+        nok_statuses = 0
         ok_statuses = 0
         for host in statuses:
             host_status = nagios_status(host)
             if host_status.lower() != "ok":
-                ret_statuses += host + " is " + str(host_status) + "; "
+                nok_statuses += 1
+                ret_statuses += " - Host \"" + host + "\" is " + str(host_status) + "\"\n"
             else:
                 ok_statuses += 1
         if len(ret_statuses) > 0:
             ret_statuses = ret_statuses[:-2] + ". "
-        ret_statuses += str(ok_statuses) + " hosts are ok."
+        ret_statuses += "\n" + (" - Other " if nok_statuses > 0 else str()) + str(ok_statuses) + " hosts are ok."
         return ret_statuses
     else:
         params = message.split()
@@ -178,6 +180,31 @@ def command_status(message):
                     return status
                 else:
                     return "Host \"" + hostname + "\" not found."
+        else:
+            return "Host not found."
+
+
+def command_list(message):
+    global statuses
+    if message.lower()[:len("list")] == "list":
+        message = message[len("list"):].strip()
+    if message.lower() == "help":
+        return "list [host_name]"
+    elif len(message) == 0:
+        ret_statuses = str()
+        for host in statuses:
+            ret_statuses += " - Host: \"" + host + "\"\n"
+        if len(ret_statuses) > 0:
+            ret_statuses = ret_statuses[:-1]
+        return ret_statuses
+    else:
+        params = message.split()
+        hostname = nagios_find_name(params[0].replace("\"", "").replace("'", ""))
+        if hostname is not None:
+            status = "Host \"" + hostname + "\":\n"
+            for service in statuses[hostname]["services"]:
+                status += " - Service \"" + service + "\"\n"
+            return status
         else:
             return "Host not found."
 
@@ -230,5 +257,7 @@ while True:
                     telegram_message(command_ack(message), peer)
                 elif len(message) >= len("status") and message.lower()[:len("status")] == "status":
                     telegram_message(command_status(message), peer)
+                elif len(message) >= len("list") and message.lower()[:len("list")] == "list":
+                    telegram_message(command_list(message), peer)
                 else:
                     telegram_message("Command not found.", peer)
