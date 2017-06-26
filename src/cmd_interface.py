@@ -193,7 +193,7 @@ def command_list(message):
     elif len(message) == 0:
         ret_statuses = str()
         for host in statuses:
-            ret_statuses += " - Host: \"" + host + "\"\n"
+            ret_statuses += " - Host \"" + host + "\"\n"
         if len(ret_statuses) > 0:
             ret_statuses = ret_statuses[:-1]
         return ret_statuses
