@@ -26,7 +26,8 @@ def telegram_command(command):
 
 
 def telegram_message(message, peer):
-    return telegram_command("msg " + peer + " " + message)
+    for message_line in message.split("\n"):
+        telegram_command("msg " + peer + " " + message_line)
 
 
 def nagios_status_build():
@@ -169,9 +170,12 @@ def command_status(message):
                 else:
                     return "Service not found."
             else:
-                status = nagios_status(hostname)
-                if status is not None:
-                    return "Host \"" + hostname + "\" status is: " + str(nagios_status(hostname))
+                status_host = nagios_status(hostname)
+                if status_host is not None:
+                    status = "Host \"" + hostname + "\" status is: " + str(status_host)
+                    for service in statuses[hostname]["services"]:
+                        status += "\nStatus \"" + service + "\": " + statuses[hostname]["services"][service]
+                    return status
                 else:
                     return "Host \"" + hostname + "\" not found."
         else:
